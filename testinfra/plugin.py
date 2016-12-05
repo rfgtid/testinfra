@@ -40,6 +40,7 @@ Supervisor = modules.Supervisor.as_fixture()
 MountPoint = modules.MountPoint.as_fixture()
 Sudo = modules.Sudo.as_fixture()
 PipPackage = modules.PipPackage.as_fixture()
+Cluster = modules.Cluster().as_fixture()
 
 
 @pytest.fixture()

@@ -32,6 +32,7 @@ from testinfra.modules.supervisor import Supervisor
 from testinfra.modules.sysctl import Sysctl
 from testinfra.modules.systeminfo import SystemInfo
 from testinfra.modules.user import User
+from testinfra.modules.cluster import Cluster
 
 
 __all__ = [
@@ -39,4 +40,5 @@ __all__ = [
     "Service", "SystemInfo", "User", "Salt", "PuppetResource",
     "Facter", "Sysctl", "Socket", "Ansible", "Process",
     "Supervisor", "MountPoint", "Sudo", "PipPackage",
+    "Cluster",
 ]
