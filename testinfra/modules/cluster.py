@@ -95,15 +95,14 @@ class _PCSComposite(_PCSItem):
         return "[{0}] NAME: '{1}' TYPE '{4}' #CHILDREN {2} (parent is '{3}')".format(self.level, 
             self.name, len(self.children), pname, self.__class__.__name__)
         
-
     def find(self, name):
         if self.name == name:
             return self
         for child in self.children:
-            if child.find(name) is not None:
-                return child
+            found = child.find(name)
+            if found:
+                return found
         return None
-
 
     def display(self):
         print(str(self))
