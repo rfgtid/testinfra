@@ -28,7 +28,6 @@ from itertools   import takewhile
 from collections import deque
 import re
 
-is_spc = ' '.__eq__
 
 # This is the resulting class tree after parsing the command command output
 
@@ -250,6 +249,7 @@ def build_item(line, parent, level):
 
     return item
        
+is_spc = ' '.__eq__
 
 def build_tree(stdout):
     """Parse pcs output and builds a tree of _PCSItem nodes"""
