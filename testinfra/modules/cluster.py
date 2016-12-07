@@ -12,21 +12,14 @@
 # limitations under the License.
 
 from __future__ import unicode_literals
-
+from itertools   import takewhile
+from collections import deque
 from testinfra.modules.base import Module
 
+import re
 import logging
 
 log = logging.getLogger("cluster")
-
-
-
-
-
-
-from itertools   import takewhile
-from collections import deque
-import re
 
 
 # This is the resulting class tree after parsing the command command output
@@ -66,7 +59,11 @@ class _PCSResource(_PCSItem):
 
     def __init__(self, parent=None, level=-1):
         super(_PCSResource, self).__init__(parent, level)
-        self.state = None
+        self._state = None
+
+    @property
+    def state(self):
+        return self._state
 
     def __str__(self):
         pname = self.parent.name if self.parent else "None"
@@ -109,11 +106,22 @@ class _PCSComposite(_PCSItem):
         for child in self.children:
             child.display()
 
+class _PCSResourceComposite(_PCSComposite):
 
-class _PCSResourceGroup(_PCSComposite):
+    @property
+    def state(self):
+        for child in self.children:
+            if child.state == 'Stopped':
+                return 'Stopped'
+        return 'Started'
+
+class _PCSResourceGroup(_PCSResourceComposite):
     pass
 
-class _PCSMasterSlaveSet(_PCSComposite):
+class _PCSMasterSlaveSet(_PCSResourceComposite):
+    pass
+
+class _PCSCloneSet(_PCSResourceComposite):
     pass
 
     
@@ -178,7 +186,7 @@ def build_item(line, parent, level):
             for i in range(0, n):
                 item = _PCSMasterResource(parent=parent, level=level)
                 item.name  = parent.childname
-                item.state = 'Started'
+                item._state = 'Started'
                 parent.children.append(item)
             matched = True
             break
@@ -187,7 +195,7 @@ def build_item(line, parent, level):
             for i in range(0, n):
                 item = _PCSSlaveResource(parent=parent, level=level)
                 item.name  = parent.childname
-                item.state = 'Started'
+                item._state = 'Started'
                 parent.children.append(item)
             matched = True
             break
@@ -203,7 +211,7 @@ def build_item(line, parent, level):
             for i in range(0, n):
                 item = _PCSResource(parent=parent, level=level)
                 item.name  = parent.childname
-                item.state = 'Started'
+                item._state = 'Started'
                 parent.children.append(item)
             matched = True
             break
@@ -212,7 +220,7 @@ def build_item(line, parent, level):
             for i in range(0, n):
                 item = _PCSResource(parent=parent, level=level)
                 item.name  = parent.childname
-                item.state = 'Stopped'
+                item._state = 'Stopped'
                 parent.children.append(item)
             matched = True
             break
@@ -226,7 +234,7 @@ def build_item(line, parent, level):
             item = _PCSResource(parent=parent, level=level)
             item.name = match_obj.group(1)
             item.res_type = match_obj.group(2)
-            item.state    = match_obj.group(3)
+            item._state    = match_obj.group(3)
             matched = True
             parent.children.append(item)
             break
@@ -338,7 +346,13 @@ class PacemakerCluster(Cluster):
 
     @property
     def name(self):
-        """Return Tthe cluster name"""
+        """Return The cluster name
+
+        >>> with Sudo(): 
+        ...    Cluster().name.startswith('authdb_cluster')
+        >>> True
+
+        """
         nvpair = self.root.find('Cluster name')
         if nvpair is None:
             raise RuntimeError("Cannot find 'Cluster name' object in pcs output")
@@ -346,29 +360,85 @@ class PacemakerCluster(Cluster):
 
     @property
     def online_nodes(self):
-        """Return sequence of online cluster nodes"""
+        """Return a set of online cluster nodes
+
+        >>> with Sudo(): 
+        ...    Cluster().online_nodes
+        >>> set(['10.0.0.31', '10.0.0.32']
+
+        """
         nvpair = self.root.find('Online')
         if nvpair is None:
             raise RuntimeError("Cannot find 'Online' object in pcs output")
         return nvpair.value
 
+    def _find(self, name, klass):
+        obj = self.root.find(name)
+        if obj is None:
+            raise RuntimeError("Cannot find '%s: %s' object in pcs output" % (klass.__name__, name))
+        if not isinstance(obj, klass):
+            raise RuntimeError("item %s is not a '%s' but a '%s'" % (name, klass.__name__, obj.__class__.__name__))
+        return obj
+
     def is_resource(self, name):
-        """Return True if name is a resource"""
-        raise NotImplementedError
+        """Return True if name is a primitive resource
+
+        >>> with Sudo(): 
+        ...    Cluster().is_resource('p_vip_authdb')
+        >>> True
+
+        """
+        res = self._find(name, _PCSResource)
+        return True
 
     def is_cloned_resource(self, name):
-        """Return True if name is a cloned resource"""
-        raise NotImplementedError
+        """Return True if name is a cloned resource
+
+        >>> with Sudo(): 
+        ...    Cluster().is_cloned_resource('p_ping')
+        >>> True
+
+        """
+        res = self._find(name, _PCSResource)
+        return res.parent.__class__ ==  _PCSCloneSet
 
     def is_ms_resource(self, name):
-        """Return True if name is a master/slave resource"""
-        raise NotImplementedError
+        """Return True if name is a master/slave resource
+
+        >>> with Sudo(): 
+        ...    Cluster().is_ms_resource('p_drbd_authdb')
+        >>> True
+
+        """
+        res = self._find(name, _PCSResource)
+        return res.parent.__class__ ==  _PCSMasterSlaveSet
 
     def is_resource_group(self, name):
-        """Return True if name is resource group"""
-        rg = self.root.find(name)
-        if rg is None:
-            raise RuntimeError("Cannot find 'Resource Group: %s' object in pcs output" % (name,))
-        if not isinstance(rg, _PCSResourceGroup):
-            raise RuntimeError("item %s  is not a 'Resource Group' but %s" % (name,rg.__class__.__name__))
+        """Return True if name is a resource group
+
+        >>> with Sudo(): 
+        ...    Cluster().is_resource_group('g_authdb')
+        >>> True
+
+        """
+        rg = self._find(name, _PCSResourceGroup)
         return True
+
+    def is_started(self, name):
+        """Return True if resource is started. If a Master/Slave or Clone resource
+        returns True only if started in all nodes.
+
+        >>> with Sudo(): 
+        ...    Cluster().is_started('p_drbd_authdb')
+        >>> True
+
+        """
+        obj = self.root.find(name)
+        if obj is None:
+            raise RuntimeError("Cannot find '%s' object in pcs output" % (name,))
+        if not (isinstance(obj, _PCSResource) or issubclass(obj.__class__ , _PCSResourceComposite) ):
+            raise RuntimeError("item %s is not a single or composite resource but a '%s'" % (name, obj.__class__.__name__))
+        if issubclass(obj.parent.__class__ , _PCSMasterSlaveSet) or  issubclass(obj.parent.__class__ , _PCSCloneSet):
+            obj = obj.parent
+        return obj.state == 'Started'
+
