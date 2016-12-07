@@ -164,3 +164,13 @@ MountPoint
    :members:
 
 .. _pytest fixtures: https://pytest.org/latest/fixture.html
+
+
+Cluster
+~~~~~~~
+
+.. autoclass:: testinfra.modules.Cluster
+   :members:
+   :undoc-members:
+   :exclude-members: as_fixture, get_module_class, _find
+
