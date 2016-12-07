@@ -296,28 +296,75 @@ class Cluster(Module):
 
     @property
     def name(self):
-        """Return the cluster name"""
+        """Return The cluster name
+
+        >>> with Sudo(): 
+        ...    Cluster().name.startswith('authdb_cluster')
+        >>> True
+
+        """
         raise NotImplementedError
 
     @property
     def online_nodes(self):
-        """Return sequence of online cluster nodes"""
+        """Return a set of online cluster nodes
+
+        >>> with Sudo(): 
+        ...    Cluster().online_nodes
+        >>> set(['10.0.0.31', '10.0.0.32']
+
+        """
         raise NotImplementedError
 
     def is_resource(self, name):
-        """Return True if name is a resource"""
+        """Return True if name is a primitive resource
+
+        >>> with Sudo(): 
+        ...    Cluster().is_resource('p_vip_authdb')
+        >>> True
+
+        """
         raise NotImplementedError
 
     def is_cloned_resource(self, name):
-        """Return True if name is a cloned resource"""
+        """Return True if name is a cloned resource
+
+        >>> with Sudo(): 
+        ...    Cluster().is_cloned_resource('p_ping')
+        >>> True
+        """
         raise NotImplementedError
 
     def is_ms_resource(self, name):
-        """Return True if name is a master/slave resource"""
+        """Return True if name is a master/slave resource
+
+        >>> with Sudo(): 
+        ...    Cluster().is_ms_resource('p_drbd_authdb')
+        >>> True
+
+        """
         raise NotImplementedError
 
     def is_resource_group(self, name):
-        """Return True if name is resource group"""
+        """Return True if name is a resource group
+
+        >>> with Sudo(): 
+        ...    Cluster().is_resource_group('g_authdb')
+        >>> True
+
+        """
+        raise NotImplementedError
+
+
+    def is_started(self, name):
+        """Return True if resource with given name is started. 
+        If a Master/Slave or Clone resource returns True only if started in *all* nodes.
+
+        >>> with Sudo(): 
+        ...    Cluster().is_starded('p_drbd_authdb')
+        >>> True
+
+        """
         raise NotImplementedError
 
     @classmethod
@@ -343,6 +390,16 @@ class PacemakerCluster(Cluster):
         super(PacemakerCluster, self).__init__()
         output = self.check_output("pcs status")
         self.root = build_tree(output)
+
+
+    def _find(self, name, klass):
+        """Helper method to find resources given by name"""
+        obj = self.root.find(name)
+        if obj is None:
+            raise RuntimeError("Cannot find '%s: %s' object in pcs output" % (klass.__name__, name))
+        if not isinstance(obj, klass):
+            raise RuntimeError("item %s is not a '%s' but a '%s'" % (name, klass.__name__, obj.__class__.__name__))
+        return obj
 
     @property
     def name(self):
@@ -372,13 +429,6 @@ class PacemakerCluster(Cluster):
             raise RuntimeError("Cannot find 'Online' object in pcs output")
         return nvpair.value
 
-    def _find(self, name, klass):
-        obj = self.root.find(name)
-        if obj is None:
-            raise RuntimeError("Cannot find '%s: %s' object in pcs output" % (klass.__name__, name))
-        if not isinstance(obj, klass):
-            raise RuntimeError("item %s is not a '%s' but a '%s'" % (name, klass.__name__, obj.__class__.__name__))
-        return obj
 
     def is_resource(self, name):
         """Return True if name is a primitive resource
@@ -425,8 +475,8 @@ class PacemakerCluster(Cluster):
         return True
 
     def is_started(self, name):
-        """Return True if resource is started. If a Master/Slave or Clone resource
-        returns True only if started in all nodes.
+        """Return True if resource with given name is started. 
+        If a Master/Slave or Clone resource returns True only if started in *all* nodes.
 
         >>> with Sudo(): 
         ...    Cluster().is_started('p_drbd_authdb')
