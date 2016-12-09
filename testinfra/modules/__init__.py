@@ -14,6 +14,7 @@
 from __future__ import unicode_literals
 
 from testinfra.modules.ansible import Ansible
+from testinfra.modules.cluster import Cluster
 from testinfra.modules.command import Command
 from testinfra.modules.file import File
 from testinfra.modules.group import Group
@@ -32,7 +33,6 @@ from testinfra.modules.supervisor import Supervisor
 from testinfra.modules.sysctl import Sysctl
 from testinfra.modules.systeminfo import SystemInfo
 from testinfra.modules.user import User
-from testinfra.modules.cluster import Cluster
 
 
 __all__ = [

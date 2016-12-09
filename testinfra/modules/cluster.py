@@ -13,9 +13,9 @@
 
 from __future__ import unicode_literals
 from collections import deque
-from testinfra.modules.base import Module
-import re
 from itertools import takewhile
+import re
+from testinfra.modules.base import Module
 
 
 # This is the resulting class tree after parsing the command command output
@@ -388,7 +388,7 @@ class Cluster(Module):
     def get_module_class(cls, _backend):
         Command = _backend.get_module("Command")
         SystemInfo = _backend.get_module("SystemInfo")
-        ### FIX THE TEST BELOW !!!!!
+        # ## FIX THE TEST BELOW !!!!!
         if SystemInfo.type != "linux":
             if Command.exists("/usr/sbin/pcs"):
                 return PacemakerCluster
