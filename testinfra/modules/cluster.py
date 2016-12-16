@@ -38,6 +38,7 @@ class _PCSItem(object):
             self.__class__.__name__)
 
     def display(self):
+        """debug method"""
         print(str(self))
 
 
@@ -388,8 +389,7 @@ class Cluster(Module):
     def get_module_class(cls, _backend):
         Command = _backend.get_module("Command")
         SystemInfo = _backend.get_module("SystemInfo")
-        # ## FIX THE TEST BELOW !!!!!
-        if SystemInfo.type != "linux":
+        if SystemInfo.type == "linux":
             if Command.exists("/usr/sbin/pcs"):
                 return PacemakerCluster
             else:
