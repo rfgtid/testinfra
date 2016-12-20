@@ -266,12 +266,15 @@ def build_item(line, parent, level):
             item = _PCSNameValuePair(parent=parent, level=level)
             item.name = nvpair[0].strip()
             item.value = nvpair[1].strip()
-            parent.children.append(item)
         else:
             # Otherwise return a generic _PCSItem with name only
             item = _PCSItem(parent=parent, level=level)
             item.name = line
+        try:
+            # Try adding to parent
             parent.children.append(item)
+        except Exception:
+            pass
 
     return item
 
