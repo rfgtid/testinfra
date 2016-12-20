@@ -21,6 +21,8 @@ import testinfra
 from testinfra import modules
 
 File = modules.File.as_fixture()
+Certificate = modules.Certificate.as_fixture()
+Cluster = modules.Cluster.as_fixture()
 Command = modules.Command.as_fixture()
 Package = modules.Package.as_fixture()
 Group = modules.Group.as_fixture()
@@ -40,8 +42,6 @@ Supervisor = modules.Supervisor.as_fixture()
 MountPoint = modules.MountPoint.as_fixture()
 Sudo = modules.Sudo.as_fixture()
 PipPackage = modules.PipPackage.as_fixture()
-Cluster = modules.Cluster().as_fixture()
-
 
 @pytest.fixture()
 def LocalCommand(TestinfraBackend):
