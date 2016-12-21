@@ -322,7 +322,7 @@ class Cluster(Module):
 
     """
 
-    def __init__(self):
+    def __init__(self, cluster_output=''):
         super(Cluster, self).__init__()
 
     @property
@@ -417,10 +417,11 @@ class Cluster(Module):
 
 class PacemakerCluster(Cluster):
 
-    def __init__(self):
-        super(PacemakerCluster, self).__init__()
-        output = self.check_output("pcs status")
-        self.root = build_tree(output)
+    def __init__(self, cluster_output=''):
+        super(PacemakerCluster, self).__init__(simulate)
+        if cluster_output == '':
+            cluster_output = self.check_output("pcs status")
+        self.root = build_tree(cluster_output)
 
     def _find(self, name, klass):
         """Helper method to find resources given by name"""

@@ -313,6 +313,110 @@ t4Hawei8sdH+uxhnM2pBSDbS4wUcj/+GBJNcFyJ8RepRP4Movw==
     assert cert.expiration_date == datetime.datetime(2026, 4, 12, 13, 46, 30)
 
 
+def test_cluster1(Cluster):
+    '''Testing resource group'''
+    SOURCE = """Cluster name: cluster-nginx
+Last updated: Thu Dec  1 09:52:38 2016
+Last change: Fri Sep 30 09:17:22 2016 via cibadmin on 10.0.0.37
+Stack: cman
+Current DC: 10.0.0.37 - partition with quorum
+Version: 1.1.10-14.el6-368c726
+2 Nodes configured
+3 Resources configured
+
+
+Online: [ 10.0.0.37 10.0.0.38 ]
+
+Full list of resources:
+
+ Resource Group: g_nginx
+     p_vip_nginx    (ocf::heartbeat:IPaddr2):   Started 10.0.0.37 
+     p_nginx    (ocf::heartbeat:nginx): Started 10.0.0.37 
+     p_haproxy_nginx    (lsb:haproxy):  Started 10.0.0.37 
+
+Failed actions:
+    p_haproxy_nginx_monitor_10000 on 10.0.0.37 'not running' (7): call=265, status=complete, last-rc-change='Thu Oct  6 17:30:02 2016', queued=0ms, exec=0ms
+    p_vip_nginx_monitor_10000 on 10.0.0.37 'not running' (7): call=431, status=complete, last-rc-change='Tue Oct 11 23:05:00 2016', queued=0ms, exec=0ms
+"""
+    cluster = Cluster(cluster_output=SOURCE)
+    assert cluster.name.startswith('cluster-nginx')
+    assert cluster.online_nodes == set(['10.0.0.37', '10.0.0.38'])
+    assert cluster.is_resource_group('g_nginx')
+    assert cluster.is_resource('p_vip_nginx')
+    assert cluster.is_resource('p_haproxy_nginx')
+    assert cluster.is_resource('p_nginx')
+    assert cluster.is_started('g_nginx')
+
+
+def test_cluster2(Cluster):
+    '''Testing Master Slave reosurces'''
+    SOURCE="""Cluster name: mqtt_cluster
+Last updated: Wed Dec 21 09:47:11 2016
+Last change: Tue Sep 20 09:12:23 2016 via cibadmin on 10.0.0.35
+Stack: cman
+Current DC: 10.0.0.36 - partition with quorum
+Version: 1.1.10-14.el6-368c726
+2 Nodes configured
+5 Resources configured
+
+
+Online: [ 10.0.0.35 10.0.0.36 ]
+
+Full list of resources:
+
+ Master/Slave Set: p_drbd_mqtt-master [p_drbd_mqtt]
+     Masters: [ 10.0.0.36 ]
+     Slaves: [ 10.0.0.35 ]
+ Resource Group: g_mqtt
+     p_fs_mqtt (ocf::heartbeat:Filesystem):  Started 10.0.0.36 
+     p_mosquitto_mqtt    (lsb:mosquitto):    Started 10.0.0.36 
+     p_vip_mqtt     (ocf::heartbeat:IPaddr2):     Started 10.0.0.36 
+
+Failed actions:
+    p_drbd_mqtt_monitor_10000 on 10.0.0.35 'unknown error' (1): call=123, status=Timed Out, last-rc-change='Thu Dec 15 16:41:44 2016', queued=0ms, exec=0ms
+"""
+    cluster = Cluster(cluster_output=SOURCE)
+    assert cluster.name.startswith('mqtt_cluster')
+    assert cluster.online_nodes == set(['10.0.0.35', '10.0.0.36'])
+    assert cluster.is_resource_group('g_mqtt')
+    assert cluster.is_resource('p_vip_mqtt')
+    assert cluster.is_resource('p_mosquitto_mqtt')
+    assert cluster.is_resource('p_fs_mqtt')
+    assert cluster.is_started('g_mqtt')
+    assert cluster.is_started('p_drbd_mqtt')
+
+
+def test_cluster3(Cluster):
+    '''Testing one node offline'''
+SOURCE="""Cluster name: cluster-nginx
+Last updated: Thu Dec  1 12:16:52 2016
+Last change: Mon Sep 26 13:23:40 2016 via cibadmin on 10.0.0.11
+Stack: cman
+Current DC: 10.0.0.11 - partition with quorum
+Version: 1.1.10-14.el6-368c726
+2 Nodes configured
+2 Resources configured
+
+
+Node 10.0.0.12: OFFLINE (standby)
+Online: [ 10.0.0.11 ]
+
+Full list of resources:
+
+ Resource Group: g_nginx
+     p_vip_nginx    (ocf::heartbeat:IPaddr2):   Started 10.0.0.11 
+     p_nginx    (ocf::heartbeat:nginx): Started 10.0.0.11
+
+"""
+    cluster = Cluster(cluster_output=SOURCE)
+    assert cluster.name.startswith('cluster-nginx')
+    assert cluster.online_nodes == set(['10.0.0.12'])
+    assert cluster.is_resource_group('g_nginx')
+    assert cluster.is_resource('p_vip_nginx')
+    assert cluster.is_resource('p_nginx')
+    assert cluster.is_started('g_nginx')
+
+
 def test_ansible_unavailable(Ansible):
     with pytest.raises(RuntimeError) as excinfo:
         Ansible("setup")

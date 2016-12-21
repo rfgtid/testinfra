@@ -177,7 +177,7 @@ Certificate
 Cluster
 ~~~~~~~
 
-.. autoclass:: testinfra.modules.Cluster
+.. autoclass:: testinfra.modules.Cluster(cluster_output='')
    :members:
    :undoc-members:
    :exclude-members: get_module_class, _find
