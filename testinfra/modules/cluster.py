@@ -151,7 +151,7 @@ regexp = {
     'nodes':      re.compile(r"(\d+)\s+(Nodes configured)"),
     'online':     re.compile(r"(Online):\s+\[(.+)\]"),
     # Resource composite root
-    'res_root':   re.compile(r"(Full list of resources)"),
+    'res_root':   re.compile(r"(Full list of resources):"),
     # ordinary resources
     'resource':   re.compile(r"\s+(\w+)\s+\((.+)\):\s+(\w+)"),
     # Master/Slave Set composite
@@ -164,6 +164,8 @@ regexp = {
     'stopped':    re.compile(r"\s+(Stopped):\s+\[(.+)\]"),
     # Resource Group composite
     'res_group':  re.compile(r"\s+(Resource Group):\s+(\w+)"),
+    # Failed actions list
+    'failed_act': re.compile(r"(Failed actions):")
 }
 
 
@@ -189,6 +191,12 @@ def build_item(line, parent, level):
             parent.children.append(item)
             break
         elif match_obj and key == 'res_root':
+            item = _PCSComposite(parent=parent, level=level)
+            item.name = match_obj.group(1)
+            matched = True
+            parent.children.append(item)
+            break
+        elif match_obj and key == 'failed_act':
             item = _PCSComposite(parent=parent, level=level)
             item.name = match_obj.group(1)
             matched = True
@@ -294,6 +302,9 @@ def build_tree(stdout):
         level = len(list(takewhile(is_spc, line)))
         if level > prev_level:
             parent.appendleft(prev_node)
+         elif level == 0:
+            while len(parent) > 1:
+                parent.popleft()
         elif level < prev_level:
             parent.popleft()
         child = build_item(line, parent=parent[0], level=level)
