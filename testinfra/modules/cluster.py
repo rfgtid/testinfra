@@ -302,7 +302,7 @@ def build_tree(stdout):
         level = len(list(takewhile(is_spc, line)))
         if level > prev_level:
             parent.appendleft(prev_node)
-         elif level == 0:
+        elif level == 0:
             while len(parent) > 1:
                 parent.popleft()
         elif level < prev_level:
@@ -418,7 +418,7 @@ class Cluster(Module):
 class PacemakerCluster(Cluster):
 
     def __init__(self, cluster_output=''):
-        super(PacemakerCluster, self).__init__(simulate)
+        super(PacemakerCluster, self).__init__(cluster_output)
         if cluster_output == '':
             cluster_output = self.check_output("pcs status")
         self.root = build_tree(cluster_output)

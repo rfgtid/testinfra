@@ -350,7 +350,7 @@ Failed actions:
 
 def test_cluster2(Cluster):
     '''Testing Master Slave reosurces'''
-    SOURCE="""Cluster name: mqtt_cluster
+    SOURCE = """Cluster name: mqtt_cluster
 Last updated: Wed Dec 21 09:47:11 2016
 Last change: Tue Sep 20 09:12:23 2016 via cibadmin on 10.0.0.35
 Stack: cman
@@ -388,7 +388,7 @@ Failed actions:
 
 def test_cluster3(Cluster):
     '''Testing one node offline'''
-SOURCE="""Cluster name: cluster-nginx
+    SOURCE = """Cluster name: cluster-nginx
 Last updated: Thu Dec  1 12:16:52 2016
 Last change: Mon Sep 26 13:23:40 2016 via cibadmin on 10.0.0.11
 Stack: cman
